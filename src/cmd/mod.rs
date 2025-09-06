@@ -1,8 +1,10 @@
 use std::process::{Child, Command as StdCmd, ExitStatus};
 
-use self::pretty::{Pretty, PrettyOptions};
+use self::pretty::Pretty;
 
 mod pretty;
+
+pub use pretty::{PrettyOptions, PrettyOptionsMode};
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> Std<'_>;
