@@ -6,20 +6,19 @@ use std::{
 
 use super::*;
 
-pub struct Pretty<C> {
+pub struct PrettyTracing<C> {
     inner: C,
-    options: PrettyOptions,
 }
 
-impl<C: BaseExt> Pretty<C> {
-    pub fn new(inner: C, options: PrettyOptions) -> Self {
+impl<C: BaseExt> PrettyTracing<C> {
+    pub fn new(inner: C) -> Self {
         let mut inner = inner;
         inner.raw_mut().stdout(Stdio::piped()).stderr(Stdio::piped());
-        Self { inner, options }
+        Self { inner }
     }
 }
 
-impl<C: BaseExt> BaseExt for Pretty<C> {
+impl<C: BaseExt> BaseExt for PrettyTracing<C> {
     fn raw(&self) -> &StdCmd {
         self.inner.raw()
     }
@@ -28,21 +27,8 @@ impl<C: BaseExt> BaseExt for Pretty<C> {
     }
 }
 
-impl<C: SpawnExt> StatusExt for Pretty<C> {
+impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
     fn status(&mut self) -> ExitStatus {
-        match self.options.mode {
-            PrettyOptionsMode::Terminal => self.status_terminal(),
-            PrettyOptionsMode::Tracing => self.status_tracing(),
-        }
-    }
-}
-
-impl<C: SpawnExt> Pretty<C> {
-    fn status_terminal(&mut self) -> ExitStatus {
-        todo!()
-    }
-
-    fn status_tracing(&mut self) -> ExitStatus {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
@@ -71,29 +57,5 @@ impl<C: SpawnExt> Pretty<C> {
         let status = child.wait().unwrap();
         tracing::info!(event = "exit", status = ?status);
         status
-    }
-}
-
-pub struct PrettyOptions {
-    mode: PrettyOptionsMode,
-}
-
-pub enum PrettyOptionsMode {
-    Terminal,
-    Tracing,
-}
-
-impl PrettyOptions {
-    pub fn new() -> Self {
-        Self { mode: PrettyOptionsMode::Terminal }
-    }
-    pub fn mode(self, mode: PrettyOptionsMode) -> Self {
-        Self { mode }
-    }
-}
-
-impl Default for PrettyOptions {
-    fn default() -> Self {
-        Self::new()
     }
 }

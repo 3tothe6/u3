@@ -1,10 +1,8 @@
 use std::process::{Child, Command as StdCmd, ExitStatus};
 
-use self::pretty::Pretty;
+use self::pretty_tracing::PrettyTracing;
 
-mod pretty;
-
-pub use pretty::{PrettyOptions, PrettyOptionsMode};
+mod pretty_tracing;
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> Std<'_>;
@@ -28,8 +26,8 @@ pub trait BaseExt {
 pub trait SpawnExt: BaseExt + Sized {
     fn spawn(&mut self) -> Child;
 
-    fn pretty(self, options: PrettyOptions) -> Pretty<Self> {
-        Pretty::new(self, options)
+    fn pretty_tracing(self) -> PrettyTracing<Self> {
+        PrettyTracing::new(self)
     }
 }
 
