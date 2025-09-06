@@ -32,7 +32,7 @@ pub trait SpawnExt: BaseExt + Sized {
 }
 
 pub trait StatusExt: BaseExt + Sized {
-    fn status(&mut self) -> ExitStatus;
+    fn status(&mut self) -> anyhow::Result<ExitStatus>;
 }
 
 impl BaseExt for Std<'_> {
@@ -51,7 +51,7 @@ impl SpawnExt for Std<'_> {
 }
 
 impl StatusExt for Std<'_> {
-    fn status(&mut self) -> ExitStatus {
-        self.inner.status().unwrap()
+    fn status(&mut self) -> anyhow::Result<ExitStatus> {
+        Ok(self.inner.status().unwrap())
     }
 }

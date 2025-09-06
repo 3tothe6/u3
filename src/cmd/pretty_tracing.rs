@@ -28,7 +28,7 @@ impl<C: BaseExt> BaseExt for PrettyTracing<C> {
 }
 
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
-    fn status(&mut self) -> ExitStatus {
+    fn status(&mut self) -> anyhow::Result<ExitStatus> {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
@@ -56,6 +56,6 @@ impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
 
         let status = child.wait().unwrap();
         tracing::info!(event = "exit", status = ?status);
-        status
+        Ok(status)
     }
 }
