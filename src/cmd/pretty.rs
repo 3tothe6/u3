@@ -1,4 +1,8 @@
-use std::process::Stdio;
+use std::{
+    collections::HashMap,
+    io::{BufRead, BufReader},
+    process::Stdio,
+};
 
 use super::*;
 
@@ -24,32 +28,46 @@ impl<C: BaseExt> BaseExt for Pretty<C> {
     }
 }
 
-impl<C: StatusExt> StatusExt for Pretty<C> {
+impl<C: SpawnExt> StatusExt for Pretty<C> {
     fn status(&mut self) -> ExitStatus {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
+        let envs = self.raw().get_envs().collect::<HashMap<_, _>>();
 
-        tracing::info!(current_dir = ?current_dir, program = ?program, args = ?args);
+        let span = tracing::info_span!("cmd", current_dir = ?current_dir, program = ?program, args = ?args, envs = ?envs);
 
-        let status = self.inner.status();
+        let mut child = self.inner.spawn();
 
-        status
+        std::thread::scope(|s| {
+            s.spawn(|| {
+                let _enter = span.enter();
+                BufReader::new(child.stdout.as_mut().unwrap()).lines().for_each(|l| {
+                    tracing::info!(stdio = "stdout", message = l.unwrap());
+                });
+            });
+            s.spawn(|| {
+                let _enter = span.enter();
+                BufReader::new(child.stderr.as_mut().unwrap()).lines().for_each(|l| {
+                    tracing::info!(stdio = "stderr", message = l.unwrap());
+                });
+            });
+        });
+
+        child.wait().unwrap()
     }
 }
 
-pub struct PrettyOptions {
-    ansi: bool,
-}
+pub struct PrettyOptions;
 
 impl PrettyOptions {
     pub fn new() -> Self {
-        Self::default()
+        Self
     }
 }
 
 impl Default for PrettyOptions {
     fn default() -> Self {
-        Self { ansi: true }
+        Self::new()
     }
 }

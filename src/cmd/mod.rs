@@ -1,4 +1,4 @@
-use std::process::{Command as StdCmd, ExitStatus};
+use std::process::{Child, Command as StdCmd, ExitStatus};
 
 use self::pretty::{Pretty, PrettyOptions};
 
@@ -23,12 +23,16 @@ pub trait BaseExt {
     fn raw_mut(&mut self) -> &mut StdCmd;
 }
 
-pub trait StatusExt: BaseExt + Sized {
-    fn status(&mut self) -> ExitStatus;
+pub trait SpawnExt: BaseExt + Sized {
+    fn spawn(&mut self) -> Child;
 
     fn pretty(self, options: PrettyOptions) -> Pretty<Self> {
         Pretty::new(self, options)
     }
+}
+
+pub trait StatusExt: BaseExt + Sized {
+    fn status(&mut self) -> ExitStatus;
 }
 
 impl BaseExt for Std<'_> {
@@ -37,6 +41,12 @@ impl BaseExt for Std<'_> {
     }
     fn raw_mut(&mut self) -> &mut StdCmd {
         self.inner
+    }
+}
+
+impl SpawnExt for Std<'_> {
+    fn spawn(&mut self) -> Child {
+        self.inner.spawn().unwrap()
     }
 }
 
