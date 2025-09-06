@@ -34,27 +34,30 @@ impl<C: SpawnExt> StatusExt for Pretty<C> {
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
         let envs = self.raw().get_envs().collect::<HashMap<_, _>>();
-
         let span = tracing::info_span!("cmd", current_dir = ?current_dir, program = ?program, args = ?args, envs = ?envs);
+        let _entered = span.enter();
 
+        tracing::info!(event = "spawn");
         let mut child = self.inner.spawn();
 
         std::thread::scope(|s| {
             s.spawn(|| {
-                let _enter = span.enter();
+                let _entered = span.enter();
                 BufReader::new(child.stdout.as_mut().unwrap()).lines().for_each(|l| {
-                    tracing::info!(stdio = "stdout", message = l.unwrap());
+                    tracing::info!(event = "stdout", message = l.unwrap());
                 });
             });
             s.spawn(|| {
-                let _enter = span.enter();
+                let _entered = span.enter();
                 BufReader::new(child.stderr.as_mut().unwrap()).lines().for_each(|l| {
-                    tracing::info!(stdio = "stderr", message = l.unwrap());
+                    tracing::info!(event = "stderr", message = l.unwrap());
                 });
             });
         });
 
-        child.wait().unwrap()
+        let status = child.wait().unwrap();
+        tracing::info!(event = "exit", status = ?status);
+        status
     }
 }
 
