@@ -30,6 +30,19 @@ impl<C: BaseExt> BaseExt for Pretty<C> {
 
 impl<C: SpawnExt> StatusExt for Pretty<C> {
     fn status(&mut self) -> ExitStatus {
+        match self.options.mode {
+            PrettyOptionsMode::Terminal => self.status_terminal(),
+            PrettyOptionsMode::Tracing => self.status_tracing(),
+        }
+    }
+}
+
+impl<C: SpawnExt> Pretty<C> {
+    fn status_terminal(&mut self) -> ExitStatus {
+        todo!()
+    }
+
+    fn status_tracing(&mut self) -> ExitStatus {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
@@ -37,8 +50,8 @@ impl<C: SpawnExt> StatusExt for Pretty<C> {
         let span = tracing::info_span!("cmd", current_dir = ?current_dir, program = ?program, args = ?args, envs = ?envs);
         let _entered = span.enter();
 
-        tracing::info!(event = "spawn");
         let mut child = self.inner.spawn();
+        tracing::info!(event = "spawn");
 
         std::thread::scope(|s| {
             s.spawn(|| {
@@ -61,11 +74,21 @@ impl<C: SpawnExt> StatusExt for Pretty<C> {
     }
 }
 
-pub struct PrettyOptions;
+pub struct PrettyOptions {
+    mode: PrettyOptionsMode,
+}
+
+pub enum PrettyOptionsMode {
+    Terminal,
+    Tracing,
+}
 
 impl PrettyOptions {
     pub fn new() -> Self {
-        Self
+        Self { mode: PrettyOptionsMode::Terminal }
+    }
+    pub fn mode(self, mode: PrettyOptionsMode) -> Self {
+        Self { mode }
     }
 }
 
