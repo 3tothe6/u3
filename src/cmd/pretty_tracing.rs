@@ -11,7 +11,7 @@ pub struct PrettyTracing<C> {
 }
 
 impl<C: BaseExt> PrettyTracing<C> {
-    pub fn new(inner: C) -> Self {
+    pub(super) fn new(inner: C) -> Self {
         let mut inner = inner;
         inner.raw_mut().stdout(Stdio::piped()).stderr(Stdio::piped());
         Self { inner }
