@@ -21,33 +21,28 @@ pub struct StdCmdWrapper<'a> {
     inner: &'a mut StdCmd,
 }
 
-pub trait BaseExt {
+pub trait BaseExt: Sized {
     fn raw(&self) -> &StdCmd;
     fn raw_mut(&mut self) -> &mut StdCmd;
-}
-
-pub trait SpawnExt: BaseExt + Sized {
-    fn spawn(&mut self) -> Child;
 
     fn pretty_tracing(self) -> PrettyTracing<Self> {
         PrettyTracing::new(self)
     }
+    fn pretty_term(self) -> PrettyTerm<Self> {
+        PrettyTerm::new(self)
+    }
+}
+
+pub trait SpawnExt: BaseExt + Sized {
+    fn spawn(&mut self) -> Child;
 }
 
 pub trait StatusExt: BaseExt + Sized {
     fn status(&mut self) -> anyhow::Result<ExitStatus>;
-
-    fn pretty_term(self) -> PrettyTerm<Self> {
-        PrettyTerm::new(self)
-    }
 }
 
 pub trait OutputExt: BaseExt + Sized {
     fn output(&mut self) -> anyhow::Result<Output>;
-
-    fn pretty_term(self) -> PrettyTerm<Self> {
-        PrettyTerm::new(self)
-    }
 }
 
 impl BaseExt for StdCmdWrapper<'_> {
