@@ -46,15 +46,13 @@ impl<C: BaseExt> PrettyTerm<C> {
         let current_dir = self
             .raw()
             .get_current_dir()
-            .map(|p| p.to_path_buf())
-            .unwrap_or_else(|| std::env::current_dir().unwrap())
-            .canonicalize()
-            .unwrap();
+            .map(|p| p.canonicalize().unwrap())
+            .unwrap_or_else(|| std::env::current_dir().unwrap());
 
         let mut stderr = StandardStream::stderr(Default::default());
 
         stderr.with_color(ColorSpec::new().set_bg(Some(Cyan)).set_fg(Some(Black)), |s| {
-            write!(s, "{}", current_dir.display()).unwrap()
+            write!(s, "{}", current_dir.display()).unwrap();
         });
         write!(stderr, " ").unwrap();
         stderr.with_color(ColorSpec::new().set_fg(Some(Cyan)), |s| {
@@ -76,10 +74,12 @@ impl<C: BaseExt> PrettyTerm<C> {
             }
         );
         stderr.with_color(
-            ColorSpec::new().set_bg(Some(match v.status().success() {
-                true => Green,
-                false => Red,
-            })),
+            ColorSpec::new()
+                .set_bg(Some(match v.status().success() {
+                    true => Green,
+                    false => Red,
+                }))
+                .set_fg(Some(Black)),
             |s| write!(s, "{eo}").unwrap(),
         );
         writeln!(stderr).unwrap();
