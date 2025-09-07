@@ -43,15 +43,14 @@ impl<C: BaseExt> PrettyTerm<C> {
         F: FnOnce(&mut Self) -> T,
         T: ExitStatusOrOutput,
     {
-        let current_dir = self
-            .raw()
-            .get_current_dir()
-            .map(|p| p.canonicalize().unwrap())
-            .unwrap_or_else(|| std::env::current_dir().unwrap());
-
         let mut stderr = StandardStream::stderr(Default::default());
 
         stderr.with_color(ColorSpec::new().set_bg(Some(Cyan)).set_fg(Some(Black)), |s| {
+            let current_dir = self
+                .raw()
+                .get_current_dir()
+                .map(|p| p.canonicalize().unwrap())
+                .unwrap_or_else(|| std::env::current_dir().unwrap());
             write!(s, "{}", current_dir.display()).unwrap();
         });
         write!(stderr, " ").unwrap();
@@ -62,17 +61,6 @@ impl<C: BaseExt> PrettyTerm<C> {
 
         let v = f(self);
 
-        let eo = format!(
-            " END OUTPUT {}{}",
-            match v.is_output() {
-                true => "(CAPTURED) ",
-                _ => "",
-            },
-            match (v.status().success(), v.status().code()) {
-                (false, Some(c)) => &format!("({c}) "),
-                _ => "",
-            }
-        );
         stderr.with_color(
             ColorSpec::new()
                 .set_bg(Some(match v.status().success() {
@@ -80,7 +68,20 @@ impl<C: BaseExt> PrettyTerm<C> {
                     false => Red,
                 }))
                 .set_fg(Some(Black)),
-            |s| write!(s, "{eo}").unwrap(),
+            |s| {
+                let eo = format!(
+                    " END OUTPUT {}{}",
+                    match v.is_output() {
+                        true => "(CAPTURED) ",
+                        _ => "",
+                    },
+                    match (v.status().success(), v.status().code()) {
+                        (false, Some(c)) => &format!("({c}) "),
+                        _ => "",
+                    }
+                );
+                write!(s, "{eo}").unwrap();
+            },
         );
         writeln!(stderr).unwrap();
 
