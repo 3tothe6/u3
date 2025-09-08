@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     io::{BufRead, BufReader},
     process::Stdio,
+    sync::Arc,
 };
 
 use chrono::prelude::*;
@@ -31,55 +32,63 @@ impl<C: BaseExt> BaseExt for PrettyTracing<C> {
     }
 }
 
+impl<C: SpawnExt> SpawnExt for PrettyTracing<C> {
+    type Error = Infallible;
+    fn spawn(&mut self) -> Result<Child, Self::Error> {
+        Ok(self.spawn_and_then(|c| c))
+    }
+}
+
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
     type Error = Infallible;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        Ok(self.status_with_spawn_callback(|_| ()))
+        Ok(self.spawn_and_then(|mut child| {
+            let status = child.wait().unwrap();
+            tracing::info!(event = "exit", status = ?status);
+            status
+        }))
     }
 }
 
 impl<C: SpawnExt> PrettyTracing<C> {
-    pub fn status_with_spawn_callback<F>(&mut self, callback: F) -> ExitStatus
+    pub fn spawn_and_then<F, T>(&mut self, f: F) -> T
     where
-        F: FnOnce(&mut Child),
+        F: FnOnce(Child) -> T,
     {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
         let envs = self.raw().get_envs().collect::<HashMap<_, _>>();
-        let span = tracing::info_span!(
+        let span = Arc::new(tracing::info_span!(
             "cmd",
             current_dir = ?current_dir,
             program = ?program,
             args = ?args,
             envs = ?envs,
             date = ?Local::now().format_u3(),
-        );
+        ));
         let _entered = span.enter();
 
         let mut child = self.inner.spawn().unwrap();
         tracing::info!(event = "spawn");
-        callback(&mut child);
 
+        let span1 = span.clone();
+        let span2 = span.clone();
         let stdout = child.stdout.take().unwrap();
         let stderr = child.stderr.take().unwrap();
-        std::thread::scope(|s| {
-            s.spawn(|| {
-                let _entered = span.enter();
-                BufReader::new(stdout).lines().for_each(|l| {
-                    tracing::info!(event = "stdout", message = l.unwrap());
-                });
+        std::thread::spawn(move || {
+            let _entered = span1.enter();
+            BufReader::new(stdout).lines().for_each(|l| {
+                tracing::info!(event = "stdout", message = l.unwrap());
             });
-            s.spawn(|| {
-                let _entered = span.enter();
-                BufReader::new(stderr).lines().for_each(|l| {
-                    tracing::info!(event = "stderr", message = l.unwrap());
-                });
+        });
+        std::thread::spawn(move || {
+            let _entered = span2.enter();
+            BufReader::new(stderr).lines().for_each(|l| {
+                tracing::info!(event = "stderr", message = l.unwrap());
             });
         });
 
-        let status = child.wait().unwrap();
-        tracing::info!(event = "exit", status = ?status);
-        status
+        f(child)
     }
 }
