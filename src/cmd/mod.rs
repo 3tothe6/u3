@@ -1,9 +1,15 @@
+use std::convert::Infallible;
+use std::fmt::Debug;
 use std::process::{Child, Command as StdCmd, ExitStatus, Output};
 
+use self::expect_noexit::ExpectNoExit;
+use self::expect_success::ExpectSuccess;
 use self::pretty_term::PrettyTerm;
 use self::pretty_tracing::PrettyTracing;
 
 mod commons;
+mod expect_noexit;
+mod expect_success;
 mod pretty_term;
 mod pretty_tracing;
 
@@ -31,6 +37,12 @@ pub trait BaseExt: Sized {
     fn pretty_term(self) -> PrettyTerm<Self> {
         PrettyTerm::new(self)
     }
+    fn expect_noexit(self) -> ExpectNoExit<Self> {
+        ExpectNoExit::new(self)
+    }
+    fn expect_success(self) -> ExpectSuccess<Self> {
+        ExpectSuccess::new(self)
+    }
 }
 
 pub trait SpawnExt: BaseExt + Sized {
@@ -38,11 +50,13 @@ pub trait SpawnExt: BaseExt + Sized {
 }
 
 pub trait StatusExt: BaseExt + Sized {
-    fn status(&mut self) -> anyhow::Result<ExitStatus>;
+    type Error: Debug;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error>;
 }
 
 pub trait OutputExt: BaseExt + Sized {
-    fn output(&mut self) -> anyhow::Result<Output>;
+    type Error: Debug;
+    fn output(&mut self) -> Result<Output, Self::Error>;
 }
 
 impl BaseExt for StdCmdWrapper<'_> {
@@ -61,13 +75,15 @@ impl SpawnExt for StdCmdWrapper<'_> {
 }
 
 impl StatusExt for StdCmdWrapper<'_> {
-    fn status(&mut self) -> anyhow::Result<ExitStatus> {
+    type Error = Infallible;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
         Ok(self.inner.status().unwrap())
     }
 }
 
 impl OutputExt for StdCmdWrapper<'_> {
-    fn output(&mut self) -> anyhow::Result<Output> {
+    type Error = Infallible;
+    fn output(&mut self) -> Result<Output, Self::Error> {
         Ok(self.inner.output().unwrap())
     }
 }

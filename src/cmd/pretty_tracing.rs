@@ -32,7 +32,8 @@ impl<C: BaseExt> BaseExt for PrettyTracing<C> {
 }
 
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
-    fn status(&mut self) -> anyhow::Result<ExitStatus> {
+    type Error = Infallible;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();

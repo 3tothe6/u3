@@ -26,19 +26,21 @@ impl<C: BaseExt> BaseExt for PrettyTerm<C> {
 }
 
 impl<C: StatusExt> StatusExt for PrettyTerm<C> {
-    fn status(&mut self) -> anyhow::Result<ExitStatus> {
-        self.exec(|s| s.inner.status().unwrap())
+    type Error = Infallible;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
+        Ok(self.exec(|s| s.inner.status().unwrap()))
     }
 }
 
 impl<C: OutputExt> OutputExt for PrettyTerm<C> {
-    fn output(&mut self) -> anyhow::Result<Output> {
-        self.exec(|s| s.inner.output().unwrap())
+    type Error = Infallible;
+    fn output(&mut self) -> Result<Output, Self::Error> {
+        Ok(self.exec(|s| s.inner.output().unwrap()))
     }
 }
 
 impl<C: BaseExt> PrettyTerm<C> {
-    fn exec<F, T>(&mut self, f: F) -> anyhow::Result<T>
+    fn exec<F, T>(&mut self, f: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
         T: ExitStatusOrOutput,
@@ -85,6 +87,6 @@ impl<C: BaseExt> PrettyTerm<C> {
         );
         writeln!(stderr).unwrap();
 
-        Ok(v)
+        v
     }
 }
