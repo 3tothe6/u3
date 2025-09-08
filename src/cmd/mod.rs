@@ -46,7 +46,8 @@ pub trait BaseExt: Sized {
 }
 
 pub trait SpawnExt: BaseExt + Sized {
-    fn spawn(&mut self) -> Child;
+    type Error: Debug;
+    fn spawn(&mut self) -> Result<Child, Self::Error>;
 }
 
 pub trait StatusExt: BaseExt + Sized {
@@ -69,21 +70,22 @@ impl BaseExt for StdCmdWrapper<'_> {
 }
 
 impl SpawnExt for StdCmdWrapper<'_> {
-    fn spawn(&mut self) -> Child {
-        self.inner.spawn().unwrap()
+    type Error = std::io::Error;
+    fn spawn(&mut self) -> Result<Child, Self::Error> {
+        self.inner.spawn()
     }
 }
 
 impl StatusExt for StdCmdWrapper<'_> {
-    type Error = Infallible;
+    type Error = std::io::Error;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        Ok(self.inner.status().unwrap())
+        self.inner.status()
     }
 }
 
 impl OutputExt for StdCmdWrapper<'_> {
-    type Error = Infallible;
+    type Error = std::io::Error;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        Ok(self.inner.output().unwrap())
+        self.inner.output()
     }
 }

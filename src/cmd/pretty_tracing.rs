@@ -34,6 +34,15 @@ impl<C: BaseExt> BaseExt for PrettyTracing<C> {
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
     type Error = Infallible;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
+        Ok(self.status_with_spawn_callback(|_| ()))
+    }
+}
+
+impl<C: SpawnExt> PrettyTracing<C> {
+    pub fn status_with_spawn_callback<F>(&mut self, callback: F) -> ExitStatus
+    where
+        F: FnOnce(&mut Child),
+    {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
@@ -48,8 +57,9 @@ impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
         );
         let _entered = span.enter();
 
-        let mut child = self.inner.spawn();
+        let mut child = self.inner.spawn().unwrap();
         tracing::info!(event = "spawn");
+        callback(&mut child);
 
         std::thread::scope(|s| {
             s.spawn(|| {
@@ -68,6 +78,6 @@ impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
 
         let status = child.wait().unwrap();
         tracing::info!(event = "exit", status = ?status);
-        Ok(status)
+        status
     }
 }

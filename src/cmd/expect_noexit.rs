@@ -36,7 +36,7 @@ impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
 }
 
 #[derive(Debug)]
-pub struct ErrorWithStatus(ExitStatus);
+pub struct ErrorWithStatus(pub ExitStatus);
 
 #[derive(Debug)]
-pub struct ErrorWithOutput(Output);
+pub struct ErrorWithOutput(pub Output);
