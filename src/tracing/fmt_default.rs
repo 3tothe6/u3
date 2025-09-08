@@ -5,6 +5,8 @@ use tracing_subscriber::fmt::{
     time::FormatTime,
 };
 
+use crate::chrono::ext::Ext;
+
 pub trait WithU3Default<N, L, F, W> {
     fn with_u3_default(self) -> SubscriberBuilder<N, Format<L, Timer>, F, W>;
 }
@@ -22,6 +24,6 @@ pub struct Timer;
 
 impl FormatTime for Timer {
     fn format_time(&self, w: &mut Writer<'_>) -> std::fmt::Result {
-        write!(w, "{}", Local::now().to_rfc3339_opts(SecondsFormat::Micros, false))
+        write!(w, "{}", Local::now().format_u3())
     }
 }

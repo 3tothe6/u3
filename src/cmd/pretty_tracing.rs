@@ -4,6 +4,10 @@ use std::{
     process::Stdio,
 };
 
+use chrono::prelude::*;
+
+use crate::chrono::ext::Ext;
+
 use super::*;
 
 pub struct PrettyTracing<C> {
@@ -33,7 +37,14 @@ impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
         let program = self.raw().get_program();
         let args = self.raw().get_args().collect::<Vec<_>>();
         let envs = self.raw().get_envs().collect::<HashMap<_, _>>();
-        let span = tracing::info_span!("cmd", current_dir = ?current_dir, program = ?program, args = ?args, envs = ?envs);
+        let span = tracing::info_span!(
+            "cmd",
+            current_dir = ?current_dir,
+            program = ?program,
+            args = ?args,
+            envs = ?envs,
+            date = ?Local::now().format_u3(),
+        );
         let _entered = span.enter();
 
         let mut child = self.inner.spawn();
