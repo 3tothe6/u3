@@ -61,16 +61,18 @@ impl<C: SpawnExt> PrettyTracing<C> {
         tracing::info!(event = "spawn");
         callback(&mut child);
 
+        let stdout = child.stdout.take().unwrap();
+        let stderr = child.stderr.take().unwrap();
         std::thread::scope(|s| {
             s.spawn(|| {
                 let _entered = span.enter();
-                BufReader::new(child.stdout.as_mut().unwrap()).lines().for_each(|l| {
+                BufReader::new(stdout).lines().for_each(|l| {
                     tracing::info!(event = "stdout", message = l.unwrap());
                 });
             });
             s.spawn(|| {
                 let _entered = span.enter();
-                BufReader::new(child.stderr.as_mut().unwrap()).lines().for_each(|l| {
+                BufReader::new(stderr).lines().for_each(|l| {
                     tracing::info!(event = "stderr", message = l.unwrap());
                 });
             });
