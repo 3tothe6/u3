@@ -22,3 +22,15 @@ impl ExitStatusOrOutput for Output {
         self.status
     }
 }
+
+#[derive(Debug)]
+pub enum StatusError<P> {
+    Propagated(P),
+    Unexpected(ExitStatus),
+}
+
+#[derive(Debug)]
+pub enum OutputError<P> {
+    Propagated(P),
+    Unexpected(Output),
+}

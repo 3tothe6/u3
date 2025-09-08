@@ -1,4 +1,7 @@
-use super::*;
+use super::{
+    commons::{OutputError, StatusError},
+    *,
+};
 
 pub struct ExpectSuccess<C> {
     inner: C,
@@ -20,23 +23,17 @@ impl<C: BaseExt> BaseExt for ExpectSuccess<C> {
 }
 
 impl<C: StatusExt> StatusExt for ExpectSuccess<C> {
-    type Error = ErrorWithStatus;
-    fn status(&mut self) -> Result<ExitStatus, ErrorWithStatus> {
-        let status = self.inner.status().unwrap();
-        if status.success() { Ok(status) } else { Err(ErrorWithStatus(status)) }
+    type Error = StatusError<C::Error>;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
+        let status = self.inner.status().map_err(StatusError::Propagated)?;
+        if status.success() { Ok(status) } else { Err(StatusError::Unexpected(status)) }
     }
 }
 
 impl<C: OutputExt> OutputExt for ExpectSuccess<C> {
-    type Error = ErrorWithOutput;
-    fn output(&mut self) -> Result<Output, ErrorWithOutput> {
-        let output = self.inner.output().unwrap();
-        if output.status.success() { Ok(output) } else { Err(ErrorWithOutput(output)) }
+    type Error = OutputError<C::Error>;
+    fn output(&mut self) -> Result<Output, Self::Error> {
+        let output = self.inner.output().map_err(OutputError::Propagated)?;
+        if output.status.success() { Ok(output) } else { Err(OutputError::Unexpected(output)) }
     }
 }
-
-#[derive(Debug)]
-pub struct ErrorWithStatus(pub ExitStatus);
-
-#[derive(Debug)]
-pub struct ErrorWithOutput(pub Output);
