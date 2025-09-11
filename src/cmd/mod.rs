@@ -89,3 +89,15 @@ impl OutputExt for StdCmdWrapper<'_> {
         self.inner.output()
     }
 }
+
+#[macro_export]
+macro_rules! cmd {
+    ($program:expr $(, $arg:expr)* $(,)?) => {
+        std::process::Command::new($program)
+            $(.arg($arg))*
+            .ext()
+            .pretty_term()
+            .expect_success()
+            .status()
+    };
+}
