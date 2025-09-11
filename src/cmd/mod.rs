@@ -93,11 +93,14 @@ impl OutputExt for StdCmdWrapper<'_> {
 #[macro_export]
 macro_rules! cmd {
     ($program:expr $(, $arg:expr)* $(,)?) => {
-        std::process::Command::new($program)
-            $(.arg($arg))*
-            .ext()
-            .pretty_term()
-            .expect_success()
-            .status()
+        {
+            use u3::cmd::{BaseExt, StatusExt, StdCmdExt};
+            std::process::Command::new($program)
+                $(.arg($arg))*
+                .ext()
+                .pretty_term()
+                .expect_success()
+                .status()
+        }
     };
 }
