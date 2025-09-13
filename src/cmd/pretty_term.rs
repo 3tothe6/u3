@@ -51,7 +51,7 @@ impl<C: BaseExt> PrettyTerm<C> {
             let current_dir = self
                 .raw()
                 .get_current_dir()
-                .map(|p| p.canonicalize().unwrap())
+                .map(|p| dunce::canonicalize(p).unwrap())
                 .unwrap_or_else(|| std::env::current_dir().unwrap());
             write!(s, "{}", current_dir.display()).unwrap();
         });
