@@ -8,3 +8,28 @@ pub fn see_path<P: AsRef<Path>>(path: P) {
     let path = dunce::canonicalize(path).unwrap();
     println!("See {} ({}).", Url::from_file_path(&path).unwrap(), path.display());
 }
+
+pub struct IsNotFirstItem {
+    v: bool,
+}
+
+impl IsNotFirstItem {
+    pub fn new() -> Self {
+        Self { v: false }
+    }
+    pub fn exec<F: FnOnce() -> T, T>(&mut self, f: F) -> Option<T> {
+        match self.v {
+            false => {
+                self.v = true;
+                None
+            }
+            true => Some(f()),
+        }
+    }
+}
+
+impl Default for IsNotFirstItem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
