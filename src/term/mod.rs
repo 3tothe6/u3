@@ -10,7 +10,7 @@ pub fn see_path<P: AsRef<Path>>(path: P) {
 }
 
 pub struct IsNotFirstItem {
-    v: bool,
+    pub v: bool,
 }
 
 impl IsNotFirstItem {
