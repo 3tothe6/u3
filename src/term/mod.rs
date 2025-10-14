@@ -17,13 +17,13 @@ impl IsNotFirstItem {
     pub fn new() -> Self {
         Self { v: false }
     }
-    pub fn exec<F: FnOnce() -> T, T>(&mut self, f: F) -> Option<T> {
+    pub fn exec<F: FnOnce() -> Result<(), E>, E>(&mut self, f: F) -> Result<(), E> {
         match self.v {
             false => {
                 self.v = true;
-                None
+                Ok(())
             }
-            true => Some(f()),
+            true => f(),
         }
     }
 }
