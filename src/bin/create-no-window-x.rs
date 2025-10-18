@@ -41,6 +41,7 @@ fn _main() -> Result<Infallible, Error> {
 
     let status = Command::new(program)
         .args(args)
+        .current_dir(&out_dir)
         .stdout(stdout)
         .stderr(stderr)
         .creation_flags(CREATE_NO_WINDOW.0)
