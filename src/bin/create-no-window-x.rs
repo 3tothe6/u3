@@ -26,8 +26,13 @@ fn _main() -> Result<Infallible, Error> {
     let out_dir = args.next().ok_or(Error::Args(ErrorArgs::OutDir))?;
     let program = args.next().ok_or(Error::Args(ErrorArgs::Program))?;
 
-    let out_dir = Path::new(&out_dir).join(Local::now().format_for_filename().to_string());
-    std::fs::create_dir(&out_dir).map_err(|e| Error::Dir { source: e })?;
+    let out_dir = Path::new(&out_dir);
+    match std::fs::create_dir(out_dir) {
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => (),
+        r => r.map_err(|e| Error::Dir1 { source: e })?,
+    }
+    let out_dir = out_dir.join(Local::now().format_for_filename().to_string());
+    std::fs::create_dir(&out_dir).map_err(|e| Error::Dir2 { source: e })?;
     let stdout = OpenOptions::new()
         .create(true)
         .append(true)
@@ -54,7 +59,8 @@ fn _main() -> Result<Infallible, Error> {
 #[derive(Debug)]
 enum Error {
     Args(ErrorArgs),
-    Dir { source: std::io::Error },
+    Dir1 { source: std::io::Error },
+    Dir2 { source: std::io::Error },
     File { source: std::io::Error, stdio: ErrorFileStdio },
     Status { source: std::io::Error },
     Exit(ExitStatus),
