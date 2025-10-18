@@ -27,7 +27,7 @@ fn _main() -> Result<Infallible, Error> {
     let program = args.next().ok_or(Error::Args(ErrorArgs::Program))?;
 
     let out_dir = Path::new(&out_dir).join(Local::now().format_for_filename().to_string());
-    std::fs::create_dir_all(&out_dir).map_err(|e| Error::Dir { source: e })?;
+    std::fs::create_dir(&out_dir).map_err(|e| Error::Dir { source: e })?;
     let stdout = OpenOptions::new()
         .create(true)
         .append(true)
