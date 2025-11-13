@@ -4,12 +4,14 @@ use std::process::{Child, Command as StdCmd, ExitStatus, Output};
 
 use self::expect_noexit::ExpectNoExit;
 use self::expect_success::ExpectSuccess;
+use self::pause_on_failure::PauseOnFailure;
 use self::pretty_term::PrettyTerm;
 use self::pretty_tracing::PrettyTracing;
 
 mod commons;
 mod expect_noexit;
 mod expect_success;
+mod pause_on_failure;
 mod pretty_term;
 mod pretty_tracing;
 
@@ -42,6 +44,9 @@ pub trait BaseExt: Sized {
     }
     fn expect_success(self) -> ExpectSuccess<Self> {
         ExpectSuccess::new(self)
+    }
+    fn pause_on_failure(self) -> PauseOnFailure<Self> {
+        PauseOnFailure::new(self)
     }
 }
 
@@ -94,12 +99,12 @@ impl OutputExt for StdCmdWrapper<'_> {
 macro_rules! cmd {
     ($program:expr $(, $arg:expr)* $(,)?) => {
         {
-            use $crate::cmd::{BaseExt, StatusExt, StdCmdExt};
+            use $crate::cmd::{BaseExt, StdCmdExt};
             ::std::process::Command::new($program)
                 $(.arg($arg))*
                 .ext()
                 .pretty_term()
-                .expect_success()
+                .pause_on_failure()
                 .status()
         }
     };
