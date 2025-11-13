@@ -94,8 +94,8 @@ impl OutputExt for StdCmdWrapper<'_> {
 macro_rules! cmd {
     ($program:expr $(, $arg:expr)* $(,)?) => {
         {
-            use u3::cmd::{BaseExt, StatusExt, StdCmdExt};
-            std::process::Command::new($program)
+            use $crate::cmd::{BaseExt, StatusExt, StdCmdExt};
+            ::std::process::Command::new($program)
                 $(.arg($arg))*
                 .ext()
                 .pretty_term()
