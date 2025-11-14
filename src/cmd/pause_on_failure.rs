@@ -13,16 +13,13 @@ impl<C> PauseOnFailure<C> {
 }
 
 impl<C: StatusExt> PauseOnFailure<C> {
-    pub fn status(&mut self) -> Result<Option<ExitStatus>, C::Error> {
+    pub fn status(&mut self) -> Result<ExitStatus, C::Error> {
         let status = self.inner.status()?;
-        match status.success() {
-            true => Ok(Some(status)),
-            false => {
-                println!("Press enter to continue...");
-                let mut buf = String::new();
-                std::io::stdin().read_line(&mut buf).unwrap();
-                Ok(None)
-            }
+        if !status.success() {
+            println!("Press enter to continue...");
+            let mut buf = String::new();
+            std::io::stdin().read_line(&mut buf).unwrap();
         }
+        Ok(status)
     }
 }
