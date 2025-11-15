@@ -1,28 +1,22 @@
-use std::process::Command;
+use crate::{cmd, cmd_o};
 
-use crate::cmd;
-use crate::cmd::{BaseExt, OutputExt, StdCmdExt};
+pub fn working_tree_clean() -> bool {
+    cmd_o!("git.exe", "status", "--porcelain").unwrap().stdout.is_empty()
+}
 
-pub fn with_clean_working_tree() -> WithCleanWorkingTreeGuard {
-    let clean = Command::new("git.exe")
-        .args(["status", "--porcelain"])
-        .ext()
-        .expect_success()
-        .output()
-        .unwrap()
-        .stdout
-        .is_empty();
+pub fn with_working_tree_clean() -> WithWorkingTreeCleanGuard {
+    let clean = working_tree_clean();
     if !clean {
         cmd!("git.exe", "stash", "push", "--include-untracked").unwrap();
     }
-    WithCleanWorkingTreeGuard { clean }
+    WithWorkingTreeCleanGuard { clean }
 }
 
-pub struct WithCleanWorkingTreeGuard {
+pub struct WithWorkingTreeCleanGuard {
     clean: bool,
 }
 
-impl Drop for WithCleanWorkingTreeGuard {
+impl Drop for WithWorkingTreeCleanGuard {
     fn drop(&mut self) {
         if !self.clean {
             cmd!("git.exe", "stash", "pop", "--index").unwrap();

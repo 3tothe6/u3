@@ -13,7 +13,7 @@ pub use self::expect_noexit::{ExpectNoExit, ExpectNoExitError};
 pub use self::expect_success::{ExpectSuccess, ExpectSuccessError};
 pub use self::pause_on_failure::PauseOnFailure;
 pub use self::pretty_term::{PrettyTerm, PrettyTermError};
-pub use self::pretty_tracing::{PrettyTracing, PrettyTracingError};
+pub use self::pretty_tracing::{PrettyTracing, PrettyTracingStatusError};
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> StdCmdWrapper<'_>;
@@ -63,7 +63,7 @@ pub trait StatusExt: BaseExt {
 pub trait OutputExt: BaseExt {
     type Error: Debug;
     fn output(&mut self) -> Result<Output, Self::Error>;
-    fn output_utf8(&mut self) -> Result<OutputUtf8, OutputUtf8Error<Self::Error, Output>> {
+    fn output_utf8(&mut self) -> Result<OutputUtf8, OutputUtf8Error<Self::Error>> {
         let Output { status, stdout, stderr } =
             self.output().map_err(OutputUtf8Error::Propagated)?;
         let stdout = match String::from_utf8(stdout) {
@@ -93,9 +93,9 @@ pub struct OutputUtf8 {
 }
 
 #[derive(Debug)]
-pub enum OutputUtf8Error<P, V> {
+pub enum OutputUtf8Error<P> {
     Propagated(P),
-    FromUtf8(FromUtf8Error, V),
+    FromUtf8(FromUtf8Error, Output),
 }
 
 impl BaseExt for StdCmdWrapper<'_> {
