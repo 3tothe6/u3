@@ -1,7 +1,4 @@
-use super::{
-    commons::{ExpectXxxOutputError, ExpectXxxStatusError},
-    *,
-};
+use super::*;
 
 pub struct ExpectNoExit<C> {
     inner: C,
@@ -23,11 +20,17 @@ impl<C: BaseExt> BaseExt for ExpectNoExit<C> {
 }
 
 impl<C: StatusExt> StatusExt for ExpectNoExit<C> {
-    type Error = ExpectXxxStatusError<C::Error>;
+    type Error = ExpectNoExitStatusError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        let status = self.inner.status().map_err(ExpectXxxStatusError::Propagated)?;
-        Err(ExpectXxxStatusError::Unexpected(status))
+        let status = self.inner.status().map_err(ExpectNoExitStatusError::Propagated)?;
+        Err(ExpectNoExitStatusError::Unexpected(status))
     }
+}
+
+#[derive(Debug)]
+pub enum ExpectNoExitStatusError<P> {
+    Propagated(P),
+    Unexpected(ExitStatus),
 }
 
 impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
@@ -36,4 +39,10 @@ impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
         let output = self.inner.output().map_err(ExpectXxxOutputError::Propagated)?;
         Err(ExpectXxxOutputError::Unexpected(output))
     }
+}
+
+#[derive(Debug)]
+pub enum ExpectXxxOutputError<P> {
+    Propagated(P),
+    Unexpected(Output),
 }
