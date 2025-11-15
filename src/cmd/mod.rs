@@ -10,7 +10,9 @@ mod pretty_tracing;
 
 pub use self::expect_noexit::{ExpectNoExit, ExpectNoExitOutputError, ExpectNoExitStatusError};
 pub use self::expect_success::{ExpectSuccess, ExpectSuccessOutputError, ExpectSuccessStatusError};
-pub use self::pause_on_failure::{PauseOnFailure, PauseOnFailureStatusError};
+pub use self::pause_on_failure::{
+    PauseOnFailure, PauseOnFailureOutputError, PauseOnFailureStatusError,
+};
 pub use self::pretty_term::PrettyTerm;
 pub use self::pretty_tracing::{PrettyTracing, PrettyTracingStatusError};
 

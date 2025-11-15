@@ -7,7 +7,7 @@ use u3::{
 
 fn main() {
     tracing_subscriber::fmt().with_u3_default().init();
-    Command::new("cargo").ext().pretty_term().status().unwrap();
-    Command::new("cargo").arg("cleaned").ext().pretty_term().output().unwrap();
-    Command::new("cargo").ext().pretty_tracing().status().unwrap();
+    Command::new("cargo").ext().pretty_term().pause_on_failure().status().unwrap();
+    Command::new("cargo").arg("cleaned").ext().pretty_term().pause_on_failure().output().unwrap();
+    Command::new("cargo").ext().pretty_tracing().pause_on_failure().status().unwrap();
 }
