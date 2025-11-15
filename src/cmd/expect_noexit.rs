@@ -34,15 +34,15 @@ pub enum ExpectNoExitStatusError<P> {
 }
 
 impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
-    type Error = ExpectXxxOutputError<C::Error>;
+    type Error = ExpectNoExitOutputError<C::Error>;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(ExpectXxxOutputError::Propagated)?;
-        Err(ExpectXxxOutputError::Unexpected(output))
+        let output = self.inner.output().map_err(ExpectNoExitOutputError::Propagated)?;
+        Err(ExpectNoExitOutputError::Unexpected(output))
     }
 }
 
 #[derive(Debug)]
-pub enum ExpectXxxOutputError<P> {
+pub enum ExpectNoExitOutputError<P> {
     Propagated(P),
     Unexpected(Output),
 }
