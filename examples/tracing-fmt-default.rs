@@ -4,13 +4,13 @@ use tracing_subscriber::fmt::time::{ChronoLocal, OffsetTime};
 use u3::tracing::fmt_default::WithU3Default;
 
 fn main() {
-    println!("============================== fmt() ==============================");
+    println!("------------------------------------- fmt() ------------------------------------");
     show(fmt().finish());
-    println!("============ fmt().with_timer(ChronoLocal::rfc_3339()) ============");
+    println!("------------------- fmt().with_timer(ChronoLocal::rfc_3339()) ------------------");
     show(fmt().with_timer(ChronoLocal::rfc_3339()).finish());
-    println!("===== fmt().with_timer(OffsetTime::local_rfc_3339().unwrap()) =====");
+    println!("------------ fmt().with_timer(OffsetTime::local_rfc_3339().unwrap()) -----------");
     show(fmt().with_timer(OffsetTime::local_rfc_3339().unwrap()).finish());
-    println!("===================== fmt().with_u3_default() =====================");
+    println!("---------------------------- fmt().with_u3_default() ---------------------------");
     show(fmt().with_u3_default().finish());
 }
 

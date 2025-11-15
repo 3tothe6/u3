@@ -110,3 +110,18 @@ macro_rules! cmd {
         }
     };
 }
+
+#[macro_export]
+macro_rules! cmd_o {
+    ($program:expr $(, $arg:expr)* $(,)?) => {
+        {
+            use $crate::cmd::{BaseExt, OutputExt, StdCmdExt};
+            ::std::process::Command::new($program)
+                $(.arg($arg))*
+                .ext()
+                .pretty_term()
+                .pause_on_failure()
+                .output()
+        }
+    };
+}
