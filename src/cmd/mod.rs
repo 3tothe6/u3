@@ -151,8 +151,7 @@ macro_rules! cmd_o {
             ::std::process::Command::new($program)
                 $(.arg($arg))*
                 .ext()
-                .pretty_term()
-                .pause_on_failure()
+                .expect_success()
                 .output_utf8()
         }
     };
