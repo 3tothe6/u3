@@ -59,7 +59,7 @@ pub enum PrettyTracingStatusError<S> {
 }
 
 impl<C: SpawnExt> PrettyTracing<C> {
-    pub fn spawn_and_then<F, T, E, M>(&mut self, f: F, map_spawn_error: M) -> Result<T, E>
+    fn spawn_and_then<F, T, E, M>(&mut self, f: F, map_spawn_error: M) -> Result<T, E>
     where
         F: FnOnce(Child) -> Result<T, E>,
         M: FnOnce(C::Error) -> E,

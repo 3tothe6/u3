@@ -1,18 +1,18 @@
 use std::fmt::Debug;
 use std::process::{Child, Command as StdCmd, ExitStatus, Output};
 
-use self::expect_noexit::ExpectNoExit;
-use self::expect_success::ExpectSuccess;
-use self::pause_on_failure::PauseOnFailure;
-use self::pretty_term::PrettyTerm;
-use self::pretty_tracing::PrettyTracing;
-
 mod commons;
 mod expect_noexit;
 mod expect_success;
 mod pause_on_failure;
 mod pretty_term;
 mod pretty_tracing;
+
+pub use self::expect_noexit::ExpectNoExit;
+pub use self::expect_success::ExpectSuccess;
+pub use self::pause_on_failure::PauseOnFailure;
+pub use self::pretty_term::PrettyTerm;
+pub use self::pretty_tracing::PrettyTracing;
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> StdCmdWrapper<'_>;
