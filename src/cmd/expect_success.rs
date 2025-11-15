@@ -1,5 +1,5 @@
 use super::{
-    commons::{OutputError, StatusError},
+    commons::{ExpectXxxOutputError, ExpectXxxStatusError},
     *,
 };
 
@@ -23,17 +23,21 @@ impl<C: BaseExt> BaseExt for ExpectSuccess<C> {
 }
 
 impl<C: StatusExt> StatusExt for ExpectSuccess<C> {
-    type Error = StatusError<C::Error>;
+    type Error = ExpectXxxStatusError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        let status = self.inner.status().map_err(StatusError::Propagated)?;
-        if status.success() { Ok(status) } else { Err(StatusError::Unexpected(status)) }
+        let status = self.inner.status().map_err(ExpectXxxStatusError::Propagated)?;
+        if status.success() { Ok(status) } else { Err(ExpectXxxStatusError::Unexpected(status)) }
     }
 }
 
 impl<C: OutputExt> OutputExt for ExpectSuccess<C> {
-    type Error = OutputError<C::Error>;
+    type Error = ExpectXxxOutputError<C::Error>;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(OutputError::Propagated)?;
-        if output.status.success() { Ok(output) } else { Err(OutputError::Unexpected(output)) }
+        let output = self.inner.output().map_err(ExpectXxxOutputError::Propagated)?;
+        if output.status.success() {
+            Ok(output)
+        } else {
+            Err(ExpectXxxOutputError::Unexpected(output))
+        }
     }
 }

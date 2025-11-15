@@ -12,7 +12,7 @@ pub fn with_clean_working_tree() -> WithCleanWorkingTreeGuard {
         .unwrap()
         .stdout
         .is_empty();
-    if clean {
+    if !clean {
         cmd!("git.exe", "stash", "push", "--include-untracked").unwrap();
     }
     WithCleanWorkingTreeGuard { clean }
@@ -24,7 +24,7 @@ pub struct WithCleanWorkingTreeGuard {
 
 impl Drop for WithCleanWorkingTreeGuard {
     fn drop(&mut self) {
-        if self.clean {
+        if !self.clean {
             cmd!("git.exe", "stash", "pop", "--index").unwrap();
         }
     }

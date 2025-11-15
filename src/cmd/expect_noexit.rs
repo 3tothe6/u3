@@ -1,5 +1,5 @@
 use super::{
-    commons::{OutputError, StatusError},
+    commons::{ExpectXxxOutputError, ExpectXxxStatusError},
     *,
 };
 
@@ -23,17 +23,17 @@ impl<C: BaseExt> BaseExt for ExpectNoExit<C> {
 }
 
 impl<C: StatusExt> StatusExt for ExpectNoExit<C> {
-    type Error = StatusError<C::Error>;
+    type Error = ExpectXxxStatusError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        let status = self.inner.status().map_err(StatusError::Propagated)?;
-        Err(StatusError::Unexpected(status))
+        let status = self.inner.status().map_err(ExpectXxxStatusError::Propagated)?;
+        Err(ExpectXxxStatusError::Unexpected(status))
     }
 }
 
 impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
-    type Error = OutputError<C::Error>;
+    type Error = ExpectXxxOutputError<C::Error>;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(OutputError::Propagated)?;
-        Err(OutputError::Unexpected(output))
+        let output = self.inner.output().map_err(ExpectXxxOutputError::Propagated)?;
+        Err(ExpectXxxOutputError::Unexpected(output))
     }
 }

@@ -32,28 +32,37 @@ impl<C: BaseExt> BaseExt for PrettyTracing<C> {
     }
 }
 
-impl<C: SpawnExt> SpawnExt for PrettyTracing<C> {
-    type Error = Infallible;
-    fn spawn(&mut self) -> Result<Child, Self::Error> {
-        Ok(self.spawn_and_then(|c| c))
+impl<C: SpawnExt> PrettyTracing<C> {
+    pub fn spawn(&mut self) -> Result<Child, C::Error> {
+        self.spawn_and_then(Ok, |e| e)
     }
 }
 
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
-    type Error = Infallible;
+    type Error = PrettyTracingStatusError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        Ok(self.spawn_and_then(|mut child| {
-            let status = child.wait().unwrap();
-            tracing::info!(event = "exit", status = ?status);
-            status
-        }))
+        self.spawn_and_then(
+            |mut child| {
+                let status = child.wait().map_err(PrettyTracingStatusError::Wait)?;
+                tracing::info!(event = "exit", status = ?status);
+                Ok(status)
+            },
+            PrettyTracingStatusError::Spawn,
+        )
     }
 }
 
+#[derive(Debug)]
+pub enum PrettyTracingStatusError<S> {
+    Spawn(S),
+    Wait(std::io::Error),
+}
+
 impl<C: SpawnExt> PrettyTracing<C> {
-    pub fn spawn_and_then<F, T>(&mut self, f: F) -> T
+    pub fn spawn_and_then<F, T, E, M>(&mut self, f: F, map_spawn_error: M) -> Result<T, E>
     where
-        F: FnOnce(Child) -> T,
+        F: FnOnce(Child) -> Result<T, E>,
+        M: FnOnce(C::Error) -> E,
     {
         let current_dir = self.raw().get_current_dir();
         let program = self.raw().get_program();
@@ -69,7 +78,7 @@ impl<C: SpawnExt> PrettyTracing<C> {
         ));
         let _entered = span.enter();
 
-        let mut child = self.inner.spawn().unwrap();
+        let mut child = self.inner.spawn().map_err(map_spawn_error)?;
         tracing::info!(event = "spawn");
 
         let span1 = span.clone();

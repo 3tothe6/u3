@@ -26,23 +26,23 @@ impl<C: BaseExt> BaseExt for PrettyTerm<C> {
 }
 
 impl<C: StatusExt> StatusExt for PrettyTerm<C> {
-    type Error = Infallible;
+    type Error = C::Error;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        Ok(self.exec(|s| s.inner.status().unwrap()))
+        self.exec(|s| s.inner.status())
     }
 }
 
 impl<C: OutputExt> OutputExt for PrettyTerm<C> {
-    type Error = Infallible;
+    type Error = C::Error;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        Ok(self.exec(|s| s.inner.output().unwrap()))
+        self.exec(|s| s.inner.output())
     }
 }
 
 impl<C: BaseExt> PrettyTerm<C> {
-    fn exec<F, T>(&mut self, f: F) -> T
+    fn exec<F, T, E>(&mut self, f: F) -> Result<T, E>
     where
-        F: FnOnce(&mut Self) -> T,
+        F: FnOnce(&mut Self) -> Result<T, E>,
         T: ExitStatusOrOutput,
     {
         let mut stderr = StandardStream::stderr(Default::default());
@@ -61,7 +61,7 @@ impl<C: BaseExt> PrettyTerm<C> {
         });
         writeln!(stderr).unwrap();
 
-        let v = f(self);
+        let v = f(self)?;
 
         stderr.with_color(
             ColorSpec::new()
@@ -87,6 +87,6 @@ impl<C: BaseExt> PrettyTerm<C> {
         );
         writeln!(stderr).unwrap();
 
-        v
+        Ok(v)
     }
 }

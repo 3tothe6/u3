@@ -24,13 +24,13 @@ impl ExitStatusOrOutput for Output {
 }
 
 #[derive(Debug)]
-pub enum StatusError<P> {
+pub enum ExpectXxxStatusError<P> {
     Propagated(P),
     Unexpected(ExitStatus),
 }
 
 #[derive(Debug)]
-pub enum OutputError<P> {
+pub enum ExpectXxxOutputError<P> {
     Propagated(P),
     Unexpected(Output),
 }

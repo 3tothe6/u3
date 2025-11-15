@@ -1,4 +1,4 @@
-use std::process::ExitStatus;
+use super::*;
 
 use super::StatusExt;
 
@@ -12,8 +12,18 @@ impl<C> PauseOnFailure<C> {
     }
 }
 
-impl<C: StatusExt> PauseOnFailure<C> {
-    pub fn status(&mut self) -> Result<ExitStatus, C::Error> {
+impl<C: BaseExt> BaseExt for PauseOnFailure<C> {
+    fn raw(&self) -> &StdCmd {
+        self.inner.raw()
+    }
+    fn raw_mut(&mut self) -> &mut StdCmd {
+        self.inner.raw_mut()
+    }
+}
+
+impl<C: StatusExt> StatusExt for PauseOnFailure<C> {
+    type Error = C::Error;
+    fn status(&mut self) -> Result<ExitStatus, C::Error> {
         let status = self.inner.status()?;
         if !status.success() {
             println!("Press enter to continue...");

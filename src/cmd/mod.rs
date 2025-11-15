@@ -1,4 +1,3 @@
-use std::convert::Infallible;
 use std::fmt::Debug;
 use std::process::{Child, Command as StdCmd, ExitStatus, Output};
 
@@ -99,7 +98,7 @@ impl OutputExt for StdCmdWrapper<'_> {
 macro_rules! cmd {
     ($program:expr $(, $arg:expr)* $(,)?) => {
         {
-            use $crate::cmd::{BaseExt, StdCmdExt};
+            use $crate::cmd::{BaseExt, StatusExt, StdCmdExt};
             ::std::process::Command::new($program)
                 $(.arg($arg))*
                 .ext()
