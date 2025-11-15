@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::process::{Child, Command as StdCmd, ExitStatus, Output};
+use std::string::FromUtf8Error;
 
 mod commons;
 mod expect_noexit;
@@ -51,19 +52,40 @@ pub trait BaseExt: Sized {
     }
 }
 
-pub trait SpawnExt: BaseExt + Sized {
+pub trait SpawnExt: BaseExt {
     type Error: Debug;
     fn spawn(&mut self) -> Result<Child, Self::Error>;
 }
 
-pub trait StatusExt: BaseExt + Sized {
+pub trait StatusExt: BaseExt {
     type Error: Debug;
     fn status(&mut self) -> Result<ExitStatus, Self::Error>;
 }
 
-pub trait OutputExt: BaseExt + Sized {
+pub trait OutputExt: BaseExt {
     type Error: Debug;
     fn output(&mut self) -> Result<Output, Self::Error>;
+    fn output_utf8(&mut self) -> Result<OutputUtf8, OutputUtf8Error<Self::Error>> {
+        let output = self.output().map_err(OutputUtf8Error::Propagated)?;
+        Ok(OutputUtf8 {
+            status: output.status,
+            stdout: String::from_utf8(output.stdout).map_err(OutputUtf8Error::FromUtf8)?,
+            stderr: String::from_utf8(output.stderr).map_err(OutputUtf8Error::FromUtf8)?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct OutputUtf8 {
+    pub status: ExitStatus,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+#[derive(Debug)]
+pub enum OutputUtf8Error<P> {
+    Propagated(P),
+    FromUtf8(FromUtf8Error),
 }
 
 impl BaseExt for StdCmdWrapper<'_> {
@@ -121,7 +143,7 @@ macro_rules! cmd_o {
                 .ext()
                 .pretty_term()
                 .pause_on_failure()
-                .output()
+                .output_utf8()
         }
     };
 }
