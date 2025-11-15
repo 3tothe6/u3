@@ -8,11 +8,11 @@ mod pause_on_failure;
 mod pretty_term;
 mod pretty_tracing;
 
-pub use self::expect_noexit::ExpectNoExit;
-pub use self::expect_success::ExpectSuccess;
-pub use self::pause_on_failure::PauseOnFailure;
+pub use self::expect_noexit::{ExpectNoExit, ExpectNoExitOutputError, ExpectNoExitStatusError};
+pub use self::expect_success::{ExpectSuccess, ExpectSuccessOutputError, ExpectSuccessStatusError};
+pub use self::pause_on_failure::{PauseOnFailure, PauseOnFailureStatusError};
 pub use self::pretty_term::PrettyTerm;
-pub use self::pretty_tracing::PrettyTracing;
+pub use self::pretty_tracing::{PrettyTracing, PrettyTracingStatusError};
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> StdCmdWrapper<'_>;

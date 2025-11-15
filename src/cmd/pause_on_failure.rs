@@ -22,14 +22,20 @@ impl<C: BaseExt> BaseExt for PauseOnFailure<C> {
 }
 
 impl<C: StatusExt> StatusExt for PauseOnFailure<C> {
-    type Error = C::Error;
-    fn status(&mut self) -> Result<ExitStatus, C::Error> {
-        let status = self.inner.status()?;
+    type Error = PauseOnFailureStatusError<C::Error>;
+    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
+        let status = self.inner.status().map_err(PauseOnFailureStatusError::Propagated)?;
         if !status.success() {
             println!("Press enter to continue...");
             let mut buf = String::new();
-            std::io::stdin().read_line(&mut buf).unwrap();
+            std::io::stdin().read_line(&mut buf).map_err(PauseOnFailureStatusError::Stdio)?;
         }
         Ok(status)
     }
+}
+
+#[derive(Debug)]
+pub enum PauseOnFailureStatusError<P> {
+    Propagated(P),
+    Stdio(std::io::Error),
 }
