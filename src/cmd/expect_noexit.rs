@@ -20,29 +20,23 @@ impl<C: BaseExt> BaseExt for ExpectNoExit<C> {
 }
 
 impl<C: StatusExt> StatusExt for ExpectNoExit<C> {
-    type Error = ExpectNoExitStatusError<C::Error>;
+    type Error = ExpectNoExitError<C::Error, ExitStatus>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        let status = self.inner.status().map_err(ExpectNoExitStatusError::Propagated)?;
-        Err(ExpectNoExitStatusError::Unexpected(status))
+        let status = self.inner.status().map_err(ExpectNoExitError::Propagated)?;
+        Err(ExpectNoExitError::Unexpected(status))
     }
-}
-
-#[derive(Debug)]
-pub enum ExpectNoExitStatusError<P> {
-    Propagated(P),
-    Unexpected(ExitStatus),
 }
 
 impl<C: OutputExt> OutputExt for ExpectNoExit<C> {
-    type Error = ExpectNoExitOutputError<C::Error>;
+    type Error = ExpectNoExitError<C::Error, Output>;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(ExpectNoExitOutputError::Propagated)?;
-        Err(ExpectNoExitOutputError::Unexpected(output))
+        let output = self.inner.output().map_err(ExpectNoExitError::Propagated)?;
+        Err(ExpectNoExitError::Unexpected(output))
     }
 }
 
 #[derive(Debug)]
-pub enum ExpectNoExitOutputError<P> {
+pub enum ExpectNoExitError<P, V> {
     Propagated(P),
-    Unexpected(Output),
+    Unexpected(V),
 }

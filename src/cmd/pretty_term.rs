@@ -26,33 +26,33 @@ impl<C: BaseExt> BaseExt for PrettyTerm<C> {
 }
 
 impl<C: StatusExt> StatusExt for PrettyTerm<C> {
-    type Error = C::Error;
+    type Error = PrettyTermError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
         self.exec(|s| s.inner.status())
     }
 }
 
 impl<C: OutputExt> OutputExt for PrettyTerm<C> {
-    type Error = C::Error;
+    type Error = PrettyTermError<C::Error>;
     fn output(&mut self) -> Result<Output, Self::Error> {
         self.exec(|s| s.inner.output())
     }
 }
 
 impl<C: BaseExt> PrettyTerm<C> {
-    fn exec<F, T, E>(&mut self, f: F) -> Result<T, E>
+    fn exec<F, T, E>(&mut self, f: F) -> Result<T, PrettyTermError<E>>
     where
         F: FnOnce(&mut Self) -> Result<T, E>,
         T: ExitStatusOrOutput,
     {
+        let current_dir = match self.raw().get_current_dir() {
+            Some(p) => dunce::canonicalize(p).map_err(PrettyTermError::Canonicalize)?,
+            None => std::env::current_dir().unwrap(),
+        };
+
         let mut stderr = StandardStream::stderr(Default::default());
 
         stderr.with_color(ColorSpec::new().set_bg(Some(Cyan)).set_fg(Some(Black)), |s| {
-            let current_dir = self
-                .raw()
-                .get_current_dir()
-                .map(|p| dunce::canonicalize(p).unwrap())
-                .unwrap_or_else(|| std::env::current_dir().unwrap());
             write!(s, "{}", current_dir.display()).unwrap();
         });
         write!(stderr, " ").unwrap();
@@ -61,7 +61,7 @@ impl<C: BaseExt> PrettyTerm<C> {
         });
         writeln!(stderr).unwrap();
 
-        let v = f(self)?;
+        let v = f(self).map_err(PrettyTermError::Propagated)?;
 
         stderr.with_color(
             ColorSpec::new()
@@ -89,4 +89,10 @@ impl<C: BaseExt> PrettyTerm<C> {
 
         Ok(v)
     }
+}
+
+#[derive(Debug)]
+pub enum PrettyTermError<P> {
+    Propagated(P),
+    Canonicalize(std::io::Error),
 }

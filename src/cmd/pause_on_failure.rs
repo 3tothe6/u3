@@ -2,8 +2,6 @@ use std::io::Write;
 
 use super::*;
 
-use super::StatusExt;
-
 pub struct PauseOnFailure<C> {
     inner: C,
 }
@@ -24,57 +22,41 @@ impl<C: BaseExt> BaseExt for PauseOnFailure<C> {
 }
 
 impl<C: StatusExt> StatusExt for PauseOnFailure<C> {
-    type Error = PauseOnFailureStatusError<C::Error>;
-    fn status(&mut self) -> Result<ExitStatus, Self::Error> {
-        let status = self.inner.status().map_err(PauseOnFailureStatusError::Propagated)?;
+    type Error = C::Error;
+    fn status(&mut self) -> Result<ExitStatus, C::Error> {
+        let status = self.inner.status()?;
         if !status.success() {
             println!("Press enter to continue...");
             let mut buf = String::new();
-            std::io::stdin().read_line(&mut buf).map_err(PauseOnFailureStatusError::Stdio)?;
+            std::io::stdin().read_line(&mut buf).unwrap();
         }
         Ok(status)
     }
 }
 
-#[derive(Debug)]
-pub enum PauseOnFailureStatusError<P> {
-    Propagated(P),
-    Stdio(std::io::Error),
-}
-
 impl<C: OutputExt> OutputExt for PauseOnFailure<C> {
-    type Error = PauseOnFailureOutputError<C::Error>;
-    fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(PauseOnFailureOutputError::Propagated)?;
+    type Error = C::Error;
+    fn output(&mut self) -> Result<Output, C::Error> {
+        let output = self.inner.output()?;
         if !output.status.success() {
             println!(
                 "--------------------------------- BEGIN STDOUT ---------------------------------",
             );
-            std::io::stdout()
-                .write_all(&output.stdout)
-                .map_err(PauseOnFailureOutputError::Stdio)?;
+            std::io::stdout().write_all(&output.stdout).unwrap();
             println!(
                 "---------------------------------- END STDOUT ----------------------------------",
             );
             eprintln!(
                 "--------------------------------- BEGIN STDERR ---------------------------------",
             );
-            std::io::stderr()
-                .write_all(&output.stderr)
-                .map_err(PauseOnFailureOutputError::Stdio)?;
+            std::io::stderr().write_all(&output.stderr).unwrap();
             eprintln!(
                 "---------------------------------- END STDERR ----------------------------------",
             );
             println!("Press enter to continue...");
             let mut buf = String::new();
-            std::io::stdin().read_line(&mut buf).map_err(PauseOnFailureOutputError::Stdio)?;
+            std::io::stdin().read_line(&mut buf).unwrap();
         }
         Ok(output)
     }
-}
-
-#[derive(Debug)]
-pub enum PauseOnFailureOutputError<P> {
-    Propagated(P),
-    Stdio(std::io::Error),
 }

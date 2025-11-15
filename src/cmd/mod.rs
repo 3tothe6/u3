@@ -9,13 +9,11 @@ mod pause_on_failure;
 mod pretty_term;
 mod pretty_tracing;
 
-pub use self::expect_noexit::{ExpectNoExit, ExpectNoExitOutputError, ExpectNoExitStatusError};
-pub use self::expect_success::{ExpectSuccess, ExpectSuccessOutputError, ExpectSuccessStatusError};
-pub use self::pause_on_failure::{
-    PauseOnFailure, PauseOnFailureOutputError, PauseOnFailureStatusError,
-};
-pub use self::pretty_term::PrettyTerm;
-pub use self::pretty_tracing::{PrettyTracing, PrettyTracingStatusError};
+pub use self::expect_noexit::{ExpectNoExit, ExpectNoExitError};
+pub use self::expect_success::{ExpectSuccess, ExpectSuccessError};
+pub use self::pause_on_failure::PauseOnFailure;
+pub use self::pretty_term::{PrettyTerm, PrettyTermError};
+pub use self::pretty_tracing::{PrettyTracing, PrettyTracingError};
 
 pub trait StdCmdExt {
     fn ext(&mut self) -> StdCmdWrapper<'_>;
@@ -65,13 +63,25 @@ pub trait StatusExt: BaseExt {
 pub trait OutputExt: BaseExt {
     type Error: Debug;
     fn output(&mut self) -> Result<Output, Self::Error>;
-    fn output_utf8(&mut self) -> Result<OutputUtf8, OutputUtf8Error<Self::Error>> {
-        let output = self.output().map_err(OutputUtf8Error::Propagated)?;
-        Ok(OutputUtf8 {
-            status: output.status,
-            stdout: String::from_utf8(output.stdout).map_err(OutputUtf8Error::FromUtf8)?,
-            stderr: String::from_utf8(output.stderr).map_err(OutputUtf8Error::FromUtf8)?,
-        })
+    fn output_utf8(&mut self) -> Result<OutputUtf8, OutputUtf8Error<Self::Error, Output>> {
+        let Output { status, stdout, stderr } =
+            self.output().map_err(OutputUtf8Error::Propagated)?;
+        let stdout = match String::from_utf8(stdout) {
+            Ok(stdout) => stdout,
+            Err(e) => {
+                let stdout = e.as_bytes().to_vec();
+                return Err(OutputUtf8Error::FromUtf8(e, Output { status, stdout, stderr }));
+            }
+        };
+        let stderr = match String::from_utf8(stderr) {
+            Ok(stderr) => stderr,
+            Err(e) => {
+                let stdout = stdout.into_bytes();
+                let stderr = e.as_bytes().to_vec();
+                return Err(OutputUtf8Error::FromUtf8(e, Output { status, stdout, stderr }));
+            }
+        };
+        Ok(OutputUtf8 { status, stdout, stderr })
     }
 }
 
@@ -83,9 +93,9 @@ pub struct OutputUtf8 {
 }
 
 #[derive(Debug)]
-pub enum OutputUtf8Error<P> {
+pub enum OutputUtf8Error<P, V> {
     Propagated(P),
-    FromUtf8(FromUtf8Error),
+    FromUtf8(FromUtf8Error, V),
 }
 
 impl BaseExt for StdCmdWrapper<'_> {

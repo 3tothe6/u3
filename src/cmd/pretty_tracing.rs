@@ -39,21 +39,21 @@ impl<C: SpawnExt> PrettyTracing<C> {
 }
 
 impl<C: SpawnExt> StatusExt for PrettyTracing<C> {
-    type Error = PrettyTracingStatusError<C::Error>;
+    type Error = PrettyTracingError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
         self.spawn_and_then(
             |mut child| {
-                let status = child.wait().map_err(PrettyTracingStatusError::Wait)?;
+                let status = child.wait().map_err(PrettyTracingError::Wait)?;
                 tracing::info!(event = "exit", status = ?status);
                 Ok(status)
             },
-            PrettyTracingStatusError::Spawn,
+            PrettyTracingError::Spawn,
         )
     }
 }
 
 #[derive(Debug)]
-pub enum PrettyTracingStatusError<S> {
+pub enum PrettyTracingError<S> {
     Spawn(S),
     Wait(std::io::Error),
 }
