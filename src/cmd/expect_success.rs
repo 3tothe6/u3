@@ -23,10 +23,9 @@ impl<C: StatusExt> StatusExt for ExpectSuccess<C> {
     type Error = ExpectSuccessStatusError<C::Error>;
     fn status(&mut self) -> Result<ExitStatus, Self::Error> {
         let status = self.inner.status().map_err(ExpectSuccessStatusError::Propagated)?;
-        if status.success() {
-            Ok(status)
-        } else {
-            Err(ExpectSuccessStatusError::Unexpected(status))
+        match status.success() {
+            true => Ok(status),
+            false => Err(ExpectSuccessStatusError::Unexpected(status)),
         }
     }
 }
@@ -38,19 +37,18 @@ pub enum ExpectSuccessStatusError<P> {
 }
 
 impl<C: OutputExt> OutputExt for ExpectSuccess<C> {
-    type Error = ExpectStatusOutputError<C::Error>;
+    type Error = ExpectSuccessOutputError<C::Error>;
     fn output(&mut self) -> Result<Output, Self::Error> {
-        let output = self.inner.output().map_err(ExpectStatusOutputError::Propagated)?;
-        if output.status.success() {
-            Ok(output)
-        } else {
-            Err(ExpectStatusOutputError::Unexpected(output))
+        let output = self.inner.output().map_err(ExpectSuccessOutputError::Propagated)?;
+        match output.status.success() {
+            true => Ok(output),
+            false => Err(ExpectSuccessOutputError::Unexpected(output)),
         }
     }
 }
 
 #[derive(Debug)]
-pub enum ExpectStatusOutputError<P> {
+pub enum ExpectSuccessOutputError<P> {
     Propagated(P),
     Unexpected(Output),
 }
