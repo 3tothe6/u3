@@ -1,6 +1,6 @@
 [package]
 name = "u3"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Utilities written by 3tothe6"
 repository = "https://github.com/3tothe6/u3"
