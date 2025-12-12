@@ -71,18 +71,15 @@ impl<C: BaseExt> PrettyTerm<C> {
                 }))
                 .set_fg(Some(Black)),
             |s| {
-                let eo = format!(
-                    " END OUTPUT {}{}",
-                    match v.is_output() {
-                        true => "(CAPTURED) ",
-                        _ => "",
-                    },
-                    match (v.status().success(), v.status().code()) {
-                        (false, Some(c)) => &format!("({c}) "),
-                        _ => "",
-                    }
-                );
-                write!(s, "{eo}").unwrap();
+                let captured = match v.is_output() {
+                    true => "(CAPTURED) ",
+                    _ => "",
+                };
+                let code = match (v.status().success(), v.status().code()) {
+                    (false, Some(c)) => &format!("({c}) "),
+                    _ => "",
+                };
+                write!(s, " END OUTPUT {captured}{code}").unwrap();
             },
         );
         writeln!(stderr).unwrap();
