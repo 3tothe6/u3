@@ -1,3 +1,5 @@
+use std::io::IsTerminal;
+
 use chrono::prelude::*;
 use tracing_subscriber::fmt::{
     FormatFields, SubscriberBuilder,
@@ -16,7 +18,7 @@ where
     N: for<'writer> FormatFields<'writer> + 'static,
 {
     fn with_u3_default(self) -> SubscriberBuilder<N, Format<L, Timer>, F, W> {
-        self.with_timer(Timer)
+        self.with_timer(Timer).with_ansi(std::io::stdout().is_terminal())
     }
 }
 
