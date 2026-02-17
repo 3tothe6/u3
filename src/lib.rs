@@ -1,3 +1,4 @@
+pub mod askama;
 pub mod chrono;
 pub mod cmd;
 pub mod env;
